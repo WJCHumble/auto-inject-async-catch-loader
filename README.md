@@ -26,7 +26,7 @@ traverse(ast, {
   });
 ```
 
-> 主要是它目前不怎么维护了，所以出于自己业务需求，所以自己 fork 了一份。
+> 主要是它目前不怎么维护了，出于自己业务需求，所以自己 fork 了一份。
 
 ## 在 Vue-CLI 中使用
 
@@ -44,7 +44,7 @@ chainWepack: (config) => {
 }
 ```
 
-**2. 使用 TypeScript **
+** 2. 使用 TypeScript **
 
 使用 TypeScript 开发的同学需要重写整个 `ts` rule 的 loader 配置。在 vue.config.js 的 `chainWepack` 中加入如下配置：
 ```javascript
