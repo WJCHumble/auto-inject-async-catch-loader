@@ -1,27 +1,29 @@
 {
-  "name": "async-catch-loader",
-  "version": "2.0.5",
-  "description": "a webpack loader that captures error of async function",
+  "name": "auto-inject-async-catch-loader",
+  "version": "1.0.6",
+  "description": "a webpack loader that can auto inject try catch for async function",
   "main": "src/index.js",
   "scripts": {
     "test": "jest  --detectOpenHandles"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yeyan1996/async-catch-loader.git"
+    "url": "git+https://github.com/WJCHumble/auto-inject-async-catch-loader"
   },
   "keywords": [
+    "auto",
+    "inject",
     "loader",
     "webpack",
     "try",
     "catch"
   ],
-  "author": "yeyan1996",
+  "author": "wuliu",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yeyan1996/async-catch-loader/issues"
+    "url": "https://github.com/WJCHumble/auto-inject-async-catch-loader/issues"
   },
-  "homepage": "https://github.com/yeyan1996/async-catch-loader#readme",
+  "homepage": "https://github.com/WJCHumble/auto-inject-async-catch-loader#readme",
   "devDependencies": {
     "@babel/core": "^7.5.0",
     "@babel/parser": "^7.5.0",
