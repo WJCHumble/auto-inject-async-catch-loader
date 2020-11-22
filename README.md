@@ -1,64 +1,83 @@
-# async-catch-loader
-一个自动给 async 函数注入 try/catch 的 webpack loader
+# auto-inject-async-catch 🚀
 
-在开发中经常会使用 async/await 异步编程，同时也会频繁的使用 try/catch 捕获异步中的错误，使得业务代码充斥这 try/catch 非常的冗余，使用这个 loader 可以只在打包后的代码自动注入 try/catch，使得业务代码非常简洁
-
+基于 babel 实现的自动注入 async 函数的 try catch 语句。基础配置可以看 [async-catch](https://github.com/yeyan1996/async-catch-loader) 讲解或者源码定义。这里，我优化了向上查找 parent 的过程，优化后的 `traverse` 如下所示：
 
 ```javascript
-async function func() {
-    let res = await new Promise(resolve => {
-        setTimeout(() => {
-            resolve('success')
-        }, 3000)
-    })
-}
-```
-
-打包后自动注入 try/catch
-```javascript
-async function func() {
-    try {
-       let res = await new Promise(resolve => {
-            setTimeout(() => {
-                resolve('success');
-            }, 3000);
-        });
-    } catch (e) {
-    //...
+traverse(ast, {
+    AwaitExpression(path) {
+      // 已经包含 try 语句则直接退出
+      if (
+        path.findParent(path => t.isTryStatement(path.node))
+      ) {
+        return;
+      }
+      // 查找最外层的 async 语句
+      const blockParent = path.findParent(path => t.isBlockStatement(path.node))
+      const tryCatchAst = t.tryStatement(
+        blockParent.node,
+        t.catchClause(
+          t.identifier(options.identifier),
+          t.blockStatement(catchNode)
+        ),
+        finallyNode && t.blockStatement(finallyNode)
+      )
+      blockParent.replaceWithMultiple([tryCatchAst])
     }
-}
+  });
 ```
 
-## Install
+> 主要是它目前不怎么维护了，所以出于自己业务需求，所以自己 fork 了一份。
 
-```
-npm i async-catch-loader -D
-```
+## 在 Vue-CLI 中使用
 
-## Usage
+**1. 使用 JavaScript 开发**
 
+使用 JavaScirpt 开发的同学只需要通过 `chainwebpack` 选项在 `js` rule 中添加一个 `loader` 就行。在 vue.config.js 的 `chainWepack` 中加入如下配置：
 ```javascript
-// webpack.config.js
-
-module: {
-    rules: [
-        {
-            test: /\.js$/,
-            use:{
-                loader:'async-catch-loader',
-                options:{
-                    catchCode:`alert(e)`
-                }
-            }
-        }
-    ]
+chainWepack: (config) => {
+  // TODO: cache-loader 的 options 后期需要完善一下
+  const jsRule = config.module.rule("js");
+  jsRule
+    .use("auto-inject-try-catch-loader")
+    .loader("auto-inject-try-catch-loader")
+    .end()
 }
 ```
 
-## Options
-|Name|Type|Default|Description|
-|:--:|:--:|:--:|:----------|
-|**`identifier`**|`{string}`|`"e"`|`catch 子句中的错误对象标识符`
-|**`catchCode`**|`{string}`|`"console.error(e)"`|`catch 子句中的代码片段`
-|**`finallyCode`**|`{string}`|`undefined`|`finally 子句中的代码片段`
+**2. 使用 TypeScript **
 
+使用 TypeScript 开发的同学需要重写整个 `ts` rule 的 loader 配置。在 vue.config.js 的 `chainWepack` 中加入如下配置：
+```javascript
+chainWebpack: (config) => {
+  // TODO: cache-loader 的 options 后期需要完善一下
+  const tsRule = config.module.rule("ts");
+  tsRule.uses.clear();
+  tsRule
+    .use("cache-loader")
+      .loader("cache-loader")
+      .end()
+    .use("babel-loader")
+      .loader("babel-loader")
+      .end()
+    .use("auto-inject-async-catch-loader")
+      .loader("auto-inject-async-catch-loader")
+      .tap(() => {
+        return {
+          catchCode: 'console.error(e)'
+        }
+      })
+      .end()
+    .use("ts-loader")
+      .loader("ts-loader")
+      .tap(() => {
+        return {
+                  transpileOnly: true,
+                  appendTsSuffixTo: [
+                    '\\.vue$'
+                  ],
+                  happyPackMode: false
+                }
+      })
+      .end()
+}
+```
