@@ -31,6 +31,9 @@ const isAsyncFuncNode = node =>
   }) ||
   t.isObjectMethod(node, {
     async: true
+  }) ||
+  t.isClassMethod(node, {
+    async: true
   });
 
 module.exports = function(source) {
@@ -55,33 +58,23 @@ module.exports = function(source) {
    * **/
   traverse(ast, {
     AwaitExpression(path) {
-      // 递归向上找异步函数的 node 节点
-      while (path && path.node) {
-        let parentPath = path.parentPath;
-        if (
-          // 找到 async Function
-          t.isBlockStatement(path.node) &&
-          isAsyncFuncNode(parentPath.node)
-        ) {
-          let tryCatchAst = t.tryStatement(
-            path.node,
-            t.catchClause(
-              t.identifier(options.identifier),
-              t.blockStatement(catchNode)
-            ),
-            finallyNode && t.blockStatement(finallyNode)
-          );
-          path.replaceWithMultiple([tryCatchAst]);
-          return;
-        } else if (
-          // 已经包含 try 语句则直接退出
-          t.isBlockStatement(path.node) &&
-          t.isTryStatement(parentPath.node)
-        ) {
-          return;
-        }
-        path = parentPath;
+      // 已经包含 try 语句则直接退出
+      if (
+        path.findParent(path => t.isTryStatement(path.node))
+      ) {
+        return;
       }
+      // 查找最外层的 BlockStatement 节点
+      const blockParent = path.findParent(path => t.isBlockStatement(path.node) && isAsyncFuncNode(path.parentPath.node))
+      const tryCatchAst = t.tryStatement(
+        blockParent.node,
+        t.catchClause(
+          t.identifier(options.identifier),
+          t.blockStatement(catchNode)
+        ),
+        finallyNode && t.blockStatement(finallyNode)
+      )
+      blockParent.replaceWithMultiple([tryCatchAst])
     }
   });
   return core.transformFromAstSync(ast, null, {
