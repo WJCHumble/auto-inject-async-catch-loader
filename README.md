@@ -44,7 +44,7 @@ chainWepack: (config) => {
 }
 ```
 
-** 2. 使用 TypeScript **
+**2. 使用 TypeScript**
 
 使用 TypeScript 开发的同学需要重写整个 `ts` rule 的 loader 配置。在 vue.config.js 的 `chainWepack` 中加入如下配置：
 ```javascript
